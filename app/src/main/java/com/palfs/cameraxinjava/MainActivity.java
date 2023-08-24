@@ -45,6 +45,7 @@ import java.util.concurrent.Executor;
 
 public class MainActivity extends AppCompatActivity implements ImageAnalysis.Analyzer, View.OnClickListener {
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
+    private static final int RECORD_AUDIO_PERMISSION_REQUEST_CODE = 1001;
 
     PreviewView previewView;
     private ImageCapture imageCapture;
@@ -151,6 +152,12 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
 
             try {
                 if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(
+                            this,
+                            new String[]{Manifest.permission.RECORD_AUDIO},
+                            RECORD_AUDIO_PERMISSION_REQUEST_CODE
+                    );
+                    return;
                     // TODO: Consider calling
                     //    ActivityCompat#requestPermissions
                     // here to request the missing permissions, and then overriding
@@ -158,7 +165,7 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
                     //                                          int[] grantResults)
                     // to handle the case where the user grants the permission. See the documentation
                     // for ActivityCompat#requestPermissions for more details.
-                    return;
+
                 }
                 videoCapture.startRecording(
                         new VideoCapture.OutputFileOptions.Builder(
