@@ -1,2 +1,3 @@
 include ':app'
 rootProject.name = "Camera X In Java"
+include ':mlkit_library'

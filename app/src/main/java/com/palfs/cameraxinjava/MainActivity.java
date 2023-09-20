@@ -2,6 +2,7 @@ package com.palfs.cameraxinjava;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
@@ -36,12 +37,18 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.face.Face;
+import com.google.mlkit.vision.face.FaceDetection;
+import com.google.mlkit.vision.face.FaceDetector;
+import com.google.mlkit.vision.face.FaceDetectorOptions;
 
 import java.io.File;
 import java.net.URI;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import androidx.camera.core.ExperimentalGetImage;
 
 public class MainActivity extends AppCompatActivity implements ImageAnalysis.Analyzer, View.OnClickListener {
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
@@ -52,6 +59,7 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
     private VideoCapture videoCapture;
     private Button bRecord;
     private Button bCapture;
+    private FaceDetector faceDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +73,15 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
         
         bCapture.setOnClickListener(this);
         bRecord.setOnClickListener(this);
+
+        faceDetector = FaceDetection.getClient(new FaceDetectorOptions.Builder()
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                .setMinFaceSize(0.1f)
+                .enableTracking()
+                .build());
 
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {
@@ -102,6 +119,7 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
                 .setVideoFrameRate(30)
                 .build();
 
+
         // Image analysis use case
         ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
@@ -110,14 +128,41 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
         imageAnalysis.setAnalyzer(getExecutor(), this);
 
         //bind to lifecycle:
-        cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, preview, imageCapture, videoCapture);
+        cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, preview, imageCapture, imageAnalysis);
     }
 
+    @OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
     @Override
     public void analyze(@NonNull ImageProxy image) {
-        // image processing here for the current frame
+
         Log.d("TAG", "analyze: got the frame at: " + image.getImageInfo().getTimestamp());
-        image.close();
+
+
+        InputImage inputImage = InputImage.fromMediaImage(image.getImage(), image.getImageInfo().getRotationDegrees());
+
+
+        faceDetector.process(inputImage)
+                .addOnSuccessListener(faces -> {
+
+                    for (Face face : faces) {
+                        float smilingProbability = face.getSmilingProbability();
+                        float leftEyeOpenProbability = face.getLeftEyeOpenProbability();
+                        float rightEyeOpenProbability = face.getRightEyeOpenProbability();
+
+                        Log.d("TAG", "Smiling Probability: " + smilingProbability);
+                        Log.d("TAG", "Left Eye Open Probability: " + leftEyeOpenProbability);
+                        Log.d("TAG", "Right Eye Open Probability: " + rightEyeOpenProbability);
+                    }
+                })
+                .addOnFailureListener(e -> {
+
+                    Log.e("TAG", "Error detecting faces: " + e.getMessage());
+                })
+                .addOnCompleteListener(task -> {
+
+                    image.close();
+                });
+        //image.close();
     }
 
     @SuppressLint("RestrictedApi")
@@ -158,13 +203,7 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
                             RECORD_AUDIO_PERMISSION_REQUEST_CODE
                     );
                     return;
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
+
 
                 }
                 videoCapture.startRecording(
