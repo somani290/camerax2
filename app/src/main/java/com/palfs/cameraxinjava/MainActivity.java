@@ -74,6 +74,8 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
         bCapture.setOnClickListener(this);
         bRecord.setOnClickListener(this);
 
+
+
         faceDetector = FaceDetection.getClient(new FaceDetectorOptions.Builder()
                 .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
                 .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
