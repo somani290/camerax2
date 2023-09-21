@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
         previewView = findViewById(R.id.previewView);
         bCapture = findViewById(R.id.bCapture);
         bRecord = findViewById(R.id.bRecord);
-        bRecord.setText("start recording"); // Set the initial text of the button
+        bRecord.setText("start recording");
         
         bCapture.setOnClickListener(this);
         bRecord.setOnClickListener(this);
@@ -111,25 +111,20 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
                 .build();
         preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
-        // Image capture use case
         imageCapture = new ImageCapture.Builder()
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                 .build();
 
-        // Video capture use case
         videoCapture = new VideoCapture.Builder()
                 .setVideoFrameRate(30)
                 .build();
 
-
-        // Image analysis use case
         ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
 
         imageAnalysis.setAnalyzer(getExecutor(), this);
 
-        //bind to lifecycle:
         cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, preview, imageCapture, imageAnalysis);
     }
 
