@@ -36,6 +36,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.example.mlkit_library.FaceTestDetection;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
@@ -65,6 +66,9 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        FaceTestDetection face=new FaceTestDetection();
+        face.simple_text(this,"Good Morning!!");
 
         previewView = findViewById(R.id.previewView);
         bCapture = findViewById(R.id.bCapture);
